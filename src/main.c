@@ -8,19 +8,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-int imax(int a, int b) 
-{
-  if (a < b) {
-    return b;
-  }
-  return a;
-}
-
 int READ_BUFFER_SIZE = 16384;
 char NO_ARGUMENTS[] = "No arguments provided to 'parrot' .. exiting\n";
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   pid_t cpid;
   int stdout_pipe_fd[2];
   int stderr_pipe_fd[2];
@@ -45,7 +36,7 @@ int main(int argc, char **argv)
   fcntl(stderr_pipe_fd[1], F_SETFD, O_NONBLOCK);
 
   cpid = fork();
-  if(cpid == -1) {
+  if (cpid == -1) {
     err(EXIT_FAILURE, "fork");
   }
 
@@ -58,9 +49,8 @@ int main(int argc, char **argv)
     }
     fcntl(stdout_pipe_fd[1], F_DUPFD, STDOUT_FILENO);
     fcntl(stderr_pipe_fd[1], F_DUPFD, STDERR_FILENO);
-    execvp(argv[1], argv+1);
-  }
-  else {
+    execvp(argv[1], argv + 1);
+  } else {
 
     fd_set rfds;
     struct timeval tv;
@@ -70,6 +60,10 @@ int main(int argc, char **argv)
     if (close(stdout_pipe_fd[1]) == -1 || close(stderr_pipe_fd[1]) == -1) {
       err(EXIT_FAILURE, "parent close");
     }
+
+    FILE *stdout_fid = fopen("stdout.log", "w");
+    FILE *stderr_fid = fopen("stderr.log", "w");
+
     while (!stdout_pipe_closed || !stderr_pipe_closed) {
 
       FD_ZERO(&rfds);
@@ -80,7 +74,7 @@ int main(int argc, char **argv)
       tv.tv_usec = 100000;
 
       int num_available = select(
-        imax(stdout_pipe_fd[0], stderr_pipe_fd[0]) + 1,
+        (stdout_pipe_fd[0] > stderr_pipe_fd[0])?stdout_pipe_fd[0]:stderr_pipe_fd[0] + 1,
         &rfds,
         NULL,
         NULL,
@@ -99,18 +93,18 @@ int main(int argc, char **argv)
         int bytes_read = read(stdout_pipe_fd[0], stdout_buf, READ_BUFFER_SIZE);
         if (bytes_read == 0) {
           stdout_pipe_closed = 1;
-        }
-        else {
+        } else {
           write(STDOUT_FILENO, stdout_buf, strlen(stdout_buf));
+          write(fileno(stdout_fid), stdout_buf, strlen(stdout_buf));
         }
       }
       if (FD_ISSET(stderr_pipe_fd[0], &rfds)) {
         int bytes_read = read(stderr_pipe_fd[0], stderr_buf, READ_BUFFER_SIZE);
         if (bytes_read == 0) {
           stderr_pipe_closed = 1;
-        }
-        else {
+        } else {
           write(STDERR_FILENO, stderr_buf, strlen(stderr_buf));
+          write(fileno(stderr_fid), stderr_buf, strlen(stderr_buf));
         }
       }
     }
