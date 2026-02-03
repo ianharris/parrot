@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "config.h"
+
 int READ_BUFFER_SIZE = 16384;
 char NO_ARGUMENTS[] = "No arguments provided to 'parrot' .. exiting\n";
 
@@ -22,6 +24,9 @@ int main(int argc, char **argv) {
     write(STDOUT_FILENO, NO_ARGUMENTS, strlen(NO_ARGUMENTS));
     return 0;
   }
+
+  struct configuration config;
+  get_configuration(argc, argv, &config);
 
   if (pipe(stdout_pipe_fd) == -1) {
     err(EXIT_FAILURE, "pipe");
@@ -49,7 +54,13 @@ int main(int argc, char **argv) {
     }
     fcntl(stdout_pipe_fd[1], F_DUPFD, STDOUT_FILENO);
     fcntl(stderr_pipe_fd[1], F_DUPFD, STDERR_FILENO);
-    execvp(argv[1], argv + 1);
+    int error = execvp(
+      argv[config.process_argument_index],
+      argv + config.process_argument_index
+    );
+    if (error == -1) {
+      err(EXIT_FAILURE, "child could not run specified program");
+    }
   } else {
 
     fd_set rfds;
@@ -61,8 +72,8 @@ int main(int argc, char **argv) {
       err(EXIT_FAILURE, "parent close");
     }
 
-    FILE *stdout_fid = fopen("stdout.log", "w");
-    FILE *stderr_fid = fopen("stderr.log", "w");
+    FILE *stdout_fid = fopen(config.stdout_log_filename, "w");
+    FILE *stderr_fid = fopen(config.stderr_log_filename, "w");
 
     while (!stdout_pipe_closed || !stderr_pipe_closed) {
 
@@ -94,8 +105,8 @@ int main(int argc, char **argv) {
         if (bytes_read == 0) {
           stdout_pipe_closed = 1;
         } else {
-          write(STDOUT_FILENO, stdout_buf, strlen(stdout_buf));
-          write(fileno(stdout_fid), stdout_buf, strlen(stdout_buf));
+          write(STDOUT_FILENO, stdout_buf, bytes_read);
+          write(fileno(stdout_fid), stdout_buf, bytes_read);
         }
       }
       if (FD_ISSET(stderr_pipe_fd[0], &rfds)) {
@@ -103,8 +114,8 @@ int main(int argc, char **argv) {
         if (bytes_read == 0) {
           stderr_pipe_closed = 1;
         } else {
-          write(STDERR_FILENO, stderr_buf, strlen(stderr_buf));
-          write(fileno(stderr_fid), stderr_buf, strlen(stderr_buf));
+          write(STDERR_FILENO, stderr_buf, bytes_read);
+          write(fileno(stderr_fid), stderr_buf, bytes_read);
         }
       }
     }
