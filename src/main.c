@@ -1,4 +1,5 @@
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +74,13 @@ int main(int argc, char **argv) {
     }
 
     FILE *stdout_fid = fopen(config.stdout_log_filename, "w");
+    if (stdout_fid == NULL) {
+      err(1, "Error opening stdout log file %s\n", config.stdout_log_filename);
+    }
     FILE *stderr_fid = fopen(config.stderr_log_filename, "w");
+    if (stderr_fid == NULL) {
+      err(1, "Error opening stderr log file %s\n", config.stderr_log_filename);
+    }
 
     while (!stdout_pipe_closed || !stderr_pipe_closed) {
 
