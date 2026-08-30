@@ -1,0 +1,21 @@
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
+jobs:
+  Build-Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and Test parrot
+        run: |
+          echo "Building and Testing parrot for branch: ${{ github.ref }}"
+          echo "Build running on a ${{ runner.os }}"
+      - name: Check out repository code
+        uses: actions/checkout@v6
+      - name: List files in the repository
+        run: |
+          ls .
+          ls ${{ github.workspace }}
+          pwd
+          echo ${{ github.workspace }}
+
+      # - run: echo "🍏 This job's status is ${{ job.status }}."
