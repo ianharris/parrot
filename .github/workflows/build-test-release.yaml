@@ -1,0 +1,23 @@
+name: GHA Build, Test, Release
+run-name: Build, Test and Release parrot
+on: [push]
+jobs:
+  Build-Test-Release:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+      - name: Build parrot binary
+        run: |
+          make all
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        if: github.ref_type == 'tag'
+        with:
+          working_directory: bin
+          files: parrot*
