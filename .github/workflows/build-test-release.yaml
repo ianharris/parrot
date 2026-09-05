@@ -1,17 +1,18 @@
 name: GHA Release
-run-name: Build Test and Release parrot
+run-name: Build, Test and Release parrot
 on: [push]
 jobs:
   Build-Test:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Build and Test parrot
-        run: |
-          echo "Building and Testing parrot for branch: ${{ github.ref }}"
-          echo "Build running on a ${{ runner.os }}"
       - name: Check out repository code
         uses: actions/checkout@v6
-      - name: List files in the repository
+      - name: Build parrot binary
         run: |
           mkdir -p build
           cd build
