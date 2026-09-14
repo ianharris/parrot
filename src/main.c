@@ -1,5 +1,4 @@
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +9,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "version.h"
 
 int READ_BUFFER_SIZE = 16384;
 char NO_ARGUMENTS[] = "No arguments provided to 'parrot' .. exiting\n";
