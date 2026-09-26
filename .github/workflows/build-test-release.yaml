@@ -3,6 +3,8 @@ run-name: Build, Test and Release parrot
 on: [push]
 jobs:
   Build-Test-Release:
+    permissions:
+      contents: write
     strategy:
       matrix:
         os:
