@@ -14,6 +14,14 @@
 int READ_BUFFER_SIZE = 16384;
 char NO_ARGUMENTS[] = "No arguments provided to 'parrot' .. exiting\n";
 
+void print_version(void) {
+
+  char version_output[32];
+
+  sprintf(version_output, "parrot: version %s\n", get_version());
+  write(STDOUT_FILENO, version_output, strlen(version_output));
+}
+
 int main(int argc, char **argv) {
   pid_t cpid;
   int stdout_pipe_fd[2];
@@ -23,6 +31,11 @@ int main(int argc, char **argv) {
 
   if (argc == 1) {
     write(STDOUT_FILENO, NO_ARGUMENTS, strlen(NO_ARGUMENTS));
+    return 0;
+  }
+
+  if (argc == 2 && strcmp(argv[1],  "--version") == 0) {
+    print_version();
     return 0;
   }
 
